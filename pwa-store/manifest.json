@@ -13,11 +13,11 @@
   },
   "description": {
     "short": "アメリカボールとAIで英語を学べる",
-    "full": "アプリの詳細な説明文です。機能や特徴、使い方などを詳しく記載します。"
+    "full": "PB English - ポーランドボールと学ぶパーソナライズ英語学習「おん！一緒に英語をマスターするおん！」『PB English』は、世界中で愛されるキャラクター「ポーランドボール（Polandball）」たちが先生となり、あなたのレベルに合わせて英語を教えてくれる、Gemini API搭載の次世代パーソナライズ型英語学習アプリです。中学1年生の基礎から、高校3年生の難解な文構造まで完全網羅。AI（Gemini）があなたの学習状況をリアルタイムで分析し、世界に一つだけの「あなた専用問題」や「個別授業」を生成します。【主な機能】1. Gemini APIによる動的学習体験AIニュース配信: 毎朝、あなたの興味やレベルに合わせた英語ニュースや学習TipsをGeminiが配信。PB先生に質問: 学習中に分からないことがあれば、いつでもポーランドボール先生にチャットで質問可能。24時間体制であなたの疑問を解決します。AIニガテ分析: 学習履歴から、あなたの「得意」と「ニガテ」を精密に分析。効率的な復習プランを提案します。2. 圧倒的な学習コンテンツ量全単元網羅: 中1〜高3までの文法項目を階層別に整理。さらに「幼稚園レベル」など自分だけのオリジナル単元も追加可能です。選べる学習モード:授業（解説）: 「個別指導」「講義」「学校」の3モードを搭載。問題（演習）: 「簡単」「テスト」「復習」「長文」の4モードから選択。AIによる精密な添削（Gemiペン先生採点）も選べます。3. 多機能な英単語帳AI単語生成: 「旅行」「ビジネス」など、テーマを入力するだけでGeminiが関連単語を自動リストアップ。フラッシュカード: 暗記カード機能で、隙間時間での効率的な単語学習をサポート。4. PWAによる快適な操作性オフライン対応: 一度生成した問題や授業データ、単語帳はIndexedDBに保存。ネット環境がない場所でも、復習や再受講が可能です。TTS（音声合成）: Gemini先生の回答をネイティブ音声（英語）や日本語解説で読み上げ。耳からの学習も完璧です。【こんな方におすすめ！】従来の英語学習アプリでは物足りず、自分に合った問題で学びたい方英語の質問をしたいけれど、塾や学校に行く時間がない方ポーランドボールの世界観を楽しみながら、モチベーションを維持したい方中学・高校の英語を基礎からしっかり学び直したい社会人の方【技術仕様】UI/UX: Material Design 2に基づいた、直感的で美しいユーザーインターフェース。プライバシー: APIキーはお客様ご自身で設定・管理するため、セキュアな環境でAIを利用可能です。バックアップ: 全学習データのインポート・エクスポートに対応。機種変更時のデータ移行も安心です。今すぐ PB English をインストールして、世界中のボールたちと一緒に英語の旅へ出かけましょう！"
   },
   "links": {
-    "app_url": "polandballhub-operator.github.io/pbenglish/",
-    "manifest_url": "https://app.example.com/manifest.json"
+    "app_url": "https://polandballhub-operator.github.io/pbenglish/",
+    "manifest_url": "raw.githubusercontent.com/PolandBallHub-Operator/pbenglish/refs/heads/main/pwa-store/manifest.json"
   },
   "metadata": {
     "category": "Education",
@@ -27,8 +27,8 @@
   "assets": {
     "icon": "https://raw.githubusercontent.com/PolandBallHub-Operator/pbenglish/refs/heads/main/images/icon-512.png",
     "screenshots": [
-      "https://app.example.com/screenshots/home.png",
-      "https://app.example.com/screenshots/settings.png"
+      "https://raw.githubusercontent.com/PolandBallHub-Operator/pbenglish/refs/heads/main/pwa-store/screen/screen-home.png",
+      "https://raw.githubusercontent.com/PolandBallHub-Operator/pbenglish/refs/heads/main/pwa-store/screen/screen-tangen.png"
     ]
   }
 }
