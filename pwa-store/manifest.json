@@ -1,0 +1,34 @@
+{
+  "app_id": "jp.apps.devtangle.pbhub.pbenglish",
+  "app_name": "EnglishAI - PBEnglish",
+  "developer": {
+    "name": "devtangle",
+    "website": "https://sites.google.com/view/pballhub",
+    "github": "https://github.com/PolandBallHub-Operator"
+  },
+  "version_info": {
+    "current_version": "1.0.0",
+    "release_date": "2026-04-23",
+    "last_updated": "2026-04-23"
+  },
+  "description": {
+    "short": "アメリカボールとAIで英語を学べる",
+    "full": "アプリの詳細な説明文です。機能や特徴、使い方などを詳しく記載します。"
+  },
+  "links": {
+    "app_url": "polandballhub-operator.github.io/pbenglish/",
+    "manifest_url": "https://app.example.com/manifest.json"
+  },
+  "metadata": {
+    "category": "Education",
+    "tags": ["PWA", "Study", "Polandball", "PBhub"],
+    "license": "Apache-2.0"
+  },
+  "assets": {
+    "icon": "https://raw.githubusercontent.com/PolandBallHub-Operator/pbenglish/refs/heads/main/images/icon-512.png",
+    "screenshots": [
+      "https://app.example.com/screenshots/home.png",
+      "https://app.example.com/screenshots/settings.png"
+    ]
+  }
+}
