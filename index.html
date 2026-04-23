@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PB English</title>
+	<link rel="manifest" href="manifest.json">
+<script>
+if ('serviceWorker' in navigator) {
+	window.addEventListener('load', () => {
+	navigator.serviceWorker.register('sw.js').then(registration => {
+	console.log('ServiceWorker registration successful with scope: ', registration.scope);
+	}, err => {
+	console.log('ServiceWorker registration failed: ', err);
+	}).catch(err => {
+	console.log(err)
+	});
+	});
+}
+</script>
+    
+    
+    
+    <!-- Material Components for Web -->
+    <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Dexie.js for IndexedDB -->
+    <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
+    <!-- JSZip for Backup -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- Marked for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        :root {
+            --mdc-theme-primary: #009688; /* Android Teal */
+            --mdc-theme-secondary: #00796B;
+            --mdc-theme-background: #f5f5f5;
+            --mdc-theme-surface: #ffffff;
+            --mdc-theme-error: #B00020;
+            --mdc-theme-on-primary: #ffffff;
+            --mdc-theme-on-secondary: #ffffff;
+            --mdc-theme-on-surface: #000000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--mdc-theme-background);
+            font-family: Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ユーティリティクラス */
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .gap-2 { gap: 8px; }
+        .gap-4 { gap: 16px; }
+        .p-4 { padding: 16px; }
+        .m-4 { margin: 16px; }
+        .mt-4 { margin-top: 16px; }
+        .mb-4 { margin-bottom: 16px; }
+        .w-full { width: 100%; }
+        .text-center { text-align: center; }
+        .hidden { display: none !important; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); padding: 16px; margin-bottom: 16px; }
+        
+        /* レイアウト */
+        .header { flex-shrink: 0; }
+        .main-content { flex-grow: 1; overflow-y: auto; padding-bottom: 80px; position: relative; }
+        .bottom-nav { flex-shrink: 0; background: white; border-top: 1px solid #ddd; display: flex; justify-content: space-around; padding: 8px 0; position: fixed; bottom: 0; width: 100%; z-index: 10;}
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #757575; cursor: pointer; min-width: 50px; font-size: 12px; }
+        .nav-item.active { color: var(--mdc-theme-primary); }
+        .nav-item i { font-size: 24px; margin-bottom: 4px; }
+
+        /* PB CSS */
+        .country-ball {
+            width: 80px; height: 72px; border: 3px solid #000;
+            border-radius: 52% 48% 45% 55% / 55% 55% 45% 45%;
+            position: relative; overflow: hidden; background-size: cover; background-position: center;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: inset -6px -6px 0 rgba(0,0,0,0.1); transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .country-ball:hover { transform: scale(1.05) translateY(-5px); }
+        .eyes-container { display: flex; gap: 8px; margin-top: -8px; pointer-events: none; }
+        .pb-eye { width: 16px; height: 22px; background: #fff; border: 2px solid #000; border-radius: 50%; }
+        .pb-eye.happy { height: 10px; border-radius: 15px 15px 0 0; margin-top: 6px; border-bottom: 0;}
+        .pb-poland { background: linear-gradient(to bottom, #dc143c 50%, #ffffff 50%); }
+        .pb-japan { background-image: url('https://upload.wikimedia.org/wikipedia/commons/9/9e/Flag_of_Japan.svg'); }
+        .pb-us { background-image: url('https://upload.wikimedia.org/wikipedia/en/a/a4/Flag_of_the_United_States.svg'); }
+
+        /* ダイアログダークモード */
+        .dark-dialog .mdc-dialog__surface { background-color: #303030; color: #fff; }
+        .dark-dialog .mdc-dialog__title, .dark-dialog .mdc-dialog__content { color: #fff; }
+        .dark-dialog .mdc-text-field__input { color: #fff; }
+        .dark-dialog .mdc-floating-label { color: #aaa; }
+
+        /* チャットUI */
+        .chat-container { display: flex; flex-direction: column; gap: 12px; }
+        .chat-bubble { max-width: 80%; padding: 12px; border-radius: 16px; font-size: 14px; line-height: 1.4; word-wrap: break-word;}
+        .chat-user { align-self: flex-end; background-color: var(--mdc-theme-primary); color: white; border-bottom-right-radius: 4px; }
+        .chat-pb { align-self: flex-start; background-color: #e0e0e0; color: black; border-bottom-left-radius: 4px; }
+        .dark-dialog .chat-pb { background-color: #555; color: white; }
+
+        /* その他UI要素 */
+        .unit-category { cursor: pointer; padding: 12px; background: #eee; border-radius: 4px; font-weight: bold; margin-top: 8px;}
+        .unit-list { padding-left: 16px; display: none; }
+        .unit-list.open { display: block; }
+        .unit-item { padding: 12px 0; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center;}
+        .unit-item:hover { background: #f9f9f9; }
+
+        /* マークダウン調整 */
+        .md-content p { margin-top: 0; }
+        .md-content pre { background: #333; color: white; padding: 8px; border-radius: 4px; overflow-x: auto;}
+
+        /* ローディング */
+        .loading-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 50; flex-direction: column; }
+    </style>
+</head>
+<body>
+
+    <!-- ヘッダー -->
+    <header class="mdc-top-app-bar header">
+        <div class="mdc-top-app-bar__row">
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+                <span class="mdc-top-app-bar__title">PB English</span>
+            </section>
+            <section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+                <button class="material-icons mdc-top-app-bar__action-item mdc-icon-button" aria-label="Sync" onclick="renderHome()">sync</button>
+            </section>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content mdc-top-app-bar--fixed-adjust" id="main-container">
+        <!-- 各タブコンテンツがここに動的に挿入される -->
+    </main>
+
+    <!-- ボトムナビゲーション -->
+    <nav class="bottom-nav" id="bottom-nav">
+        <div class="nav-item active" data-tab="home"><i class="material-icons">home</i><span>ホーム</span></div>
+        <div class="nav-item" data-tab="units"><i class="material-icons">menu_book</i><span>単元</span></div>
+        <div class="nav-item" data-tab="quiz"><i class="material-icons">quiz</i><span>問題</span></div>
+        <div class="nav-item" data-tab="class"><i class="material-icons">school</i><span>授業</span></div>
+        <div class="nav-item" data-tab="vocab"><i class="material-icons">style</i><span>英単語</span></div>
+        <div class="nav-item" data-tab="user"><i class="material-icons">person</i><span>ユーザー</span></div>
+        <div class="nav-item" data-tab="settings"><i class="material-icons">settings</i><span>設定</span></div>
+    </nav>
+
+    <!-- ダイアログ群 -->
+    <div class="mdc-dialog" id="common-dialog">
+        <div class="mdc-dialog__container">
+            <div class="mdc-dialog__surface">
+                <h2 class="mdc-dialog__title" id="dialog-title"></h2>
+                <div class="mdc-dialog__content" id="dialog-content"></div>
+                <div class="mdc-dialog__actions" id="dialog-actions">
+                    <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+                        <span class="mdc-button__label">閉じる</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="mdc-dialog__scrim"></div>
+    </div>
+
+    <!-- PBチャットダイアログ (ダークモード) -->
+    <div class="mdc-dialog dark-dialog" id="pb-chat-dialog">
+        <div class="mdc-dialog__container">
+            <div class="mdc-dialog__surface" style="width: 100%; max-width: 500px; height: 80vh; display: flex; flex-direction: column;">
+                <h2 class="mdc-dialog__title">PB先生に質問</h2>
+                <div class="mdc-dialog__content" style="flex-grow: 1; overflow-y: auto; padding-bottom: 10px;" id="pb-chat-history">
+                    <!-- チャット履歴 -->
+                </div>
+                <div style="padding: 16px; border-top: 1px solid #555; display: flex; gap: 8px;">
+                    <label class="mdc-text-field mdc-text-field--filled mdc-text-field--no-label" style="flex-grow: 1;">
+                        <span class="mdc-text-field__ripple"></span>
+                        <input class="mdc-text-field__input" type="text" id="pb-chat-input" placeholder="質問を入力...">
+                        <span class="mdc-line-ripple"></span>
+                    </label>
+                    <button class="mdc-button mdc-button--raised" onclick="sendPbQuestion()">送信</button>
+                </div>
+                <div class="mdc-dialog__actions">
+                    <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+                        <span class="mdc-button__label" style="color:var(--mdc-theme-primary)">閉じる</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="mdc-dialog__scrim"></div>
+    </div>
+
+    <script>
+        // --- データベース設定 (Dexie.js) ---
+        const db = new Dexie('PBEnglishDB');
+        db.version(1).stores({
+            settings: 'key', // apiKey, model, mode, autoTTS, nativeMode, etc
+            user: 'key', // name, icon, grade, school, isCombined
+            news: 'date',
+            chatHistory: '++id, q, a, date',
+            customUnits: '++id, grade, name',
+            questions: '++id, unit, mode, data, score, date',
+            classes: '++id, unit, log, date',
+            vocabFolders: '++id, name',
+            vocabs: '++id, folderId, en, ja'
+        });
+
+        // --- デフォルト単元データ ---
+        const defaultUnits = {
+            "中学1年生": ["アルファベットと発音", "be動詞（現在形）", "一般動詞（現在形）", "人称代名詞", "疑問詞", "命令文", "現在進行形", "複数形", "形容詞", "副詞", "Can", "There is/are", "前置詞"],
+            "中学2年生": ["過去形", "過去進行形", "未来形", "助動詞", "不定詞", "動名詞", "比較級と最上級", "接続詞", "受動態（現在・過去）", "間接疑問文"],
+            "中学3年生": ["現在完了形", "現在完了進行形", "受動態（未来・現在完了）", "分詞", "関係代名詞", "仮定法（現在・未来・過去）", "後置修飾", "付加疑問文", "不定詞の発展"],
+            "高校1年生": ["時制（過去完了含む）", "助動詞の発展", "受動態の発展", "不定詞の発展（意味上の主語等）", "動名詞の発展", "分詞構文", "関係詞の発展", "仮定法の発展", "比較表現の発展", "準動詞の総整理"],
+            "高校2年生": ["倒置", "強調構文", "省略・共通関係", "無生物主語構文", "名詞構文", "法助動詞の過去", "時や条件を表す副詞節", "動詞の語法", "文型と自他動詞"],
+            "高校3年生": ["総合的な文法・語法", "長文読解の応用", "語彙・イディオム総整理", "英作文", "リスニング対策", "難解な構文", "文構造の把握"]
+        };
+
+        // --- グローバル状態 ---
+        let currentTab = 'home';
+        let dialogInstance = null;
+        let pbChatDialogInstance = null;
+        let mdcComponents = [];
+
+        // PWA初期化(疑似)
+        function setupPWA() {
+            const manifest = { "name": "PB English", "short_name": "PB English", "display": "standalone", "background_color": "#009688", "theme_color": "#009688" };
+            const manifestUrl = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type: 'application/json'}));
+            document.head.insertAdjacentHTML('beforeend', `<link rel="manifest" href="${manifestUrl}">`);
+        }
+
+        // --- ユーティリティ ---
+        function initMDC(root = document) {
+            root.querySelectorAll('.mdc-button').forEach(el => mdc.ripple.MDCRipple.attachTo(el));
+            root.querySelectorAll('.mdc-text-field').forEach(el => {
+                if(!el.MDCTextField) mdc.textField.MDCTextField.attachTo(el);
+            });
+            root.querySelectorAll('.mdc-radio').forEach(el => mdc.radio.MDCRadio.attachTo(el));
+            root.querySelectorAll('.mdc-switch').forEach(el => mdc.switchControl.MDCSwitch.attachTo(el));
+        }
+
+        async function getSetting(key, def = null) {
+            const res = await db.settings.get(key);
+            return res ? res.value : def;
+        }
+        async function setSetting(key, value) {
+            await db.settings.put({key, value});
+        }
+        async function getUser(key, def = null) {
+            const res = await db.user.get(key);
+            return res ? res.value : def;
+        }
+
+        function showLoading(show) {
+            let overlay = document.getElementById('loading-overlay');
+            if(show) {
+                if(!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'loading-overlay';
+                    overlay.className = 'loading-overlay';
+                    overlay.innerHTML = `<div class="mdc-circular-progress mdc-circular-progress--indeterminate" style="width:48px;height:48px;" role="progressbar"><div class="mdc-circular-progress__determinate-container"><svg class="mdc-circular-progress__determinate-circle-graphic" viewBox="0 0 48 48"><circle class="mdc-circular-progress__determinate-track" cx="24" cy="24" r="18" stroke-width="4"/><circle class="mdc-circular-progress__determinate-circle" cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="113.097" stroke-width="4"/></svg></div><div class="mdc-circular-progress__indeterminate-container"><div class="mdc-circular-progress__spinner-layer"><div class="mdc-circular-progress__circle-clipper mdc-circular-progress__circle-left"><svg class="mdc-circular-progress__graphic" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="4"/></svg></div><div class="mdc-circular-progress__gap-patch"><svg class="mdc-circular-progress__graphic" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="4"/></svg></div><div class="mdc-circular-progress__circle-clipper mdc-circular-progress__circle-right"><svg class="mdc-circular-progress__graphic" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" stroke-dasharray="113.097" stroke-dashoffset="56.549" stroke-width="4"/></svg></div></div></div></div><p class="mt-4">処理中...</p>`;
+                    document.body.appendChild(overlay);
+                    mdc.circularProgress.MDCCircularProgress.attachTo(overlay.querySelector('.mdc-circular-progress'));
+                }
+                overlay.classList.remove('hidden');
+            } else if(overlay) {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function showDialog(title, content, actionsHtml = '') {
+            if(!dialogInstance) dialogInstance = new mdc.dialog.MDCDialog(document.getElementById('common-dialog'));
+            document.getElementById('dialog-title').innerText = title;
+            document.getElementById('dialog-content').innerHTML = content;
+            if(actionsHtml) {
+                document.getElementById('dialog-actions').innerHTML = actionsHtml + `<button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close"><span class="mdc-button__label">閉じる</span></button>`;
+            } else {
+                document.getElementById('dialog-actions').innerHTML = `<button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close"><span class="mdc-button__label">閉じる</span></button>`;
+            }
+            initMDC(document.getElementById('common-dialog'));
+            dialogInstance.open();
+        }
+
+        // --- Gemini API ---
+        async function callGemini(prompt, systemInstruction = "", responseJson = false) {
+            const apiKey = await getSetting('apiKey');
+            const model = await getSetting('model', 'gemini-2.5-flash');
+            if(!apiKey) throw new Error("設定タブからAPIキーを登録してください。");
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+            if (systemInstruction) payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            if (responseJson) payload.generationConfig = { responseMimeType: "application/json" };
+
+            let lastError;
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for(let i=0; i<=5; i++) {
+                try {
+                    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await res.json();
+                    if(!res.ok) throw new Error(data.error?.message || "API Error");
+                    return data.candidates[0].content.parts[0].text;
+                } catch(e) {
+                    lastError = e;
+                    if(i === 5) break;
+                    await new Promise(r => setTimeout(r, delays[i]));
+                }
+            }
+            throw lastError;
+        }
+
+        // --- TTS ---
+        async function playTTS(text) {
+            const autoTTS = await getSetting('autoTTS', true);
+            if(!autoTTS) return;
+            const nativeMode = await getSetting('nativeMode', false);
+            const ut = new SpeechSynthesisUtterance(text);
+            ut.lang = nativeMode ? 'en-US' : 'ja-JP';
+            speechSynthesis.speak(ut);
+        }
+
+        // --- ナビゲーション ---
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+                currentTab = el.dataset.tab;
+                renderTab();
+            });
+        });
+
+        async function renderTab() {
+            const container = document.getElementById('main-container');
+            container.innerHTML = '';
+            window.scrollTo(0,0);
+            
+            if(currentTab === 'home') renderHome(container);
+            else if(currentTab === 'units') renderUnits(container);
+            else if(currentTab === 'quiz') renderQuizHistory(container);
+            else if(currentTab === 'class') renderClassHistory(container);
+            else if(currentTab === 'vocab') renderVocab(container);
+            else if(currentTab === 'user') renderUser(container);
+            else if(currentTab === 'settings') renderSettings(container);
+        }
+
+        // --- 1. ホームタブ ---
+        async function renderHome(container = document.getElementById('main-container')) {
+            container.innerHTML = `<div class="p-4" id="home-content"><div class="text-center">読み込み中...</div></div>`;
+            const today = new Date().toISOString().split('T')[0];
+            
+            // ニュース取得
+            let newsData = await db.news.get(today);
+            if(!newsData) {
+                try {
+                    const newsRes = await callGemini("今日の英語学習者に向けたモチベーションの上がる短い英語ニュースや学習TIPSを1つ教えてください。日本語訳もつけてください。");
+                    newsData = { date: today, content: newsRes };
+                    await db.news.put(newsData);
+                } catch(e) {
+                    newsData = { date: today, content: "ニュースの取得に失敗しました。APIキーを設定してください。" };
+                }
+            }
+
+            // 学習時間集計 (ダミー計算: 問題1回5分, 授業1回10分)
+            const qCount = await db.questions.count();
+            const cCount = await db.classes.count();
+            const totalMin = (qCount * 5) + (cCount * 10);
+            
+            // おすすめ取得
+            const userName = await getUser('name', 'You');
+            const favUnit = await getSetting('favUnit', '未設定');
+
+            container.innerHTML = `
+                <div class="p-4">
+                    <div class="card flex items-center gap-4">
+                        <div class="country-ball pb-us"><div class="eyes-container"><div class="pb-eye happy"></div><div class="pb-eye happy"></div></div></div>
+                        <div>
+                            <h2 style="margin:0;">Hello, ${userName}!</h2>
+                            <p style="margin:5px 0 0 0; font-size:14px; color:#555;">Let's study together!</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>今日の英語News & Tips</h3>
+                        <div class="md-content" style="font-size:14px;">${marked.parse(newsData.content)}</div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <div class="card w-full text-center">
+                            <h4 style="margin:0 0 8px 0; color:#757575;">総学習時間</h4>
+                            <div style="font-size:24px; font-weight:bold; color:var(--mdc-theme-primary);">${totalMin} <span style="font-size:14px;">分</span></div>
+                        </div>
+                        <div class="card w-full text-center">
+                            <h4 style="margin:0 0 8px 0; color:#757575;">お気に入り単元</h4>
+                            <div style="font-size:16px; font-weight:bold;">${favUnit}</div>
+                        </div>
+                    </div>
+
+                    <div class="card text-center">
+                        <button class="mdc-button mdc-button--raised w-full" onclick="openPbChat()">
+                            <span class="mdc-button__label">PB先生に質問する</span>
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <h3>過去の質問履歴</h3>
+                        <ul class="mdc-list" id="home-chat-history"></ul>
+                    </div>
+                </div>
+            `;
+            initMDC(container);
+            loadHomeChatHistory();
+        }
+
+        async function loadHomeChatHistory() {
+            const list = document.getElementById('home-chat-history');
+            const history = await db.chatHistory.orderBy('id').reverse().limit(5).toArray();
+            list.innerHTML = history.length ? '' : '<li class="mdc-list-item">履歴はありません。</li>';
+            history.forEach(h => {
+                list.innerHTML += `
+                    <li class="mdc-list-item flex justify-between items-center" style="border-bottom:1px solid #eee; height:auto; padding:8px;">
+                        <div style="flex-grow:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" onclick="showDialog('Q: ${h.q}', '<div class=\\'md-content\\'>${marked.parse(h.a)}</div>')">${h.q}</div>
+                        <button class="material-icons mdc-icon-button" onclick="deleteChat(${h.id})">delete</button>
+                    </li>
+                `;
+            });
+        }
+        async function deleteChat(id) { await db.chatHistory.delete(id); loadHomeChatHistory(); }
+
+        function openPbChat() {
+            if(!pbChatDialogInstance) {
+                pbChatDialogInstance = new mdc.dialog.MDCDialog(document.getElementById('pb-chat-dialog'));
+            }
+            document.getElementById('pb-chat-history').innerHTML = `
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="country-ball pb-us" style="transform: scale(0.6);">
+                        <div class="eyes-container"><div class="pb-eye"></div><div class="pb-eye"></div></div>
+                    </div>
+                    <div class="chat-bubble chat-pb">Hi! 何か質問はあるおん？</div>
+                </div>
+            `;
+            document.getElementById('pb-chat-input').value = '';
+            pbChatDialogInstance.open();
+        }
+
+        async function sendPbQuestion() {
+            const input = document.getElementById('pb-chat-input');
+            const q = input.value.trim();
+            if(!q) return;
+            input.value = '';
+
+            const historyEl = document.getElementById('pb-chat-history');
+            historyEl.innerHTML += `<div class="flex items-center gap-2 mb-4 justify-end"><div class="chat-bubble chat-user">${q}</div></div>`;
+            historyEl.scrollTop = historyEl.scrollHeight;
+
+            const nativeMode = await getSetting('nativeMode', false);
+            const sys = nativeMode ? "You are Polandball. Answer in English briefly." : "ポーランドボールとして日本語で回答。語尾に「おん」等。簡潔に。";
+            
+            try {
+                const ans = await callGemini(q, sys);
+                historyEl.innerHTML += `
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="country-ball pb-us" style="transform: scale(0.6);">
+                           <div class="eyes-container"><div class="pb-eye"></div><div class="pb-eye"></div></div>
+                        </div>
+                        <div class="chat-bubble chat-pb md-content">${marked.parse(ans)}</div>
+                    </div>
+                `;
+                playTTS(ans);
+                await db.chatHistory.put({q, a: ans, date: new Date().toISOString()});
+                if(currentTab === 'home') loadHomeChatHistory();
+            } catch(e) {
+                historyEl.innerHTML += `<div class="chat-bubble chat-pb" style="color:red;">エラー: ${e.message}</div>`;
+            }
+            historyEl.scrollTop = historyEl.scrollHeight;
+        }
+
+        // --- 2. 単元タブ ---
+        async function renderUnits(container) {
+            const customUnits = await db.customUnits.toArray();
+            let html = `<div class="p-4">
+                <label class="mdc-text-field mdc-text-field--filled w-full mb-4">
+                    <span class="mdc-text-field__ripple"></span>
+                    <span class="mdc-floating-label">単元を検索...</span>
+                    <input class="mdc-text-field__input" type="text" id="unit-search" onkeyup="filterUnits()">
+                    <span class="mdc-line-ripple"></span>
+                </label>
+                <div class="card">
+                    <h3 style="margin-top:0;">オリジナル単元を追加</h3>
+                    <div class="flex gap-2">
+                        <label class="mdc-text-field mdc-text-field--filled w-full" style="flex:1;">
+                            <span class="mdc-text-field__ripple"></span><input class="mdc-text-field__input" type="text" id="custom-grade" placeholder="例: 幼稚園"><span class="mdc-line-ripple"></span>
+                        </label>
+                        <label class="mdc-text-field mdc-text-field--filled w-full" style="flex:2;">
+                            <span class="mdc-text-field__ripple"></span><input class="mdc-text-field__input" type="text" id="custom-name" placeholder="例: ABCをまなぶ"><span class="mdc-line-ripple"></span>
+                        </label>
+                        <button class="mdc-button mdc-button--raised" onclick="addCustomUnit()">追加</button>
+                    </div>
+                </div>
+                <div id="unit-container">
+            `;
+            
+            const allCategories = Object.keys(defaultUnits);
+            const customGrades = [...new Set(customUnits.map(u => u.grade))];
+            customGrades.forEach(g => { if(!allCategories.includes(g)) allCategories.push(g); });
+
+            allCategories.forEach(cat => {
+                html += `<div class="unit-category" onclick="this.nextElementSibling.classList.toggle('open')">${cat} <i class="material-icons" style="float:right;">expand_more</i></div>`;
+                html += `<div class="unit-list">`;
+                const items = defaultUnits[cat] || [];
+                customUnits.filter(u => u.grade === cat).forEach(u => items.push(u.name));
+                items.forEach(item => {
+                    html += `
+                        <div class="unit-item">
+                            <span class="unit-name">${item}</span>
+                            <div class="flex gap-2">
+                                <button class="mdc-icon-button material-icons" onclick="setFavUnit('${item}')" title="お気に入りに設定">star_border</button>
+                                <button class="mdc-button mdc-button--outlined" onclick="selectUnitAction('${item}')">選択</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div>`;
+            });
+            html += `</div></div>`;
+            container.innerHTML = html;
+            initMDC(container);
+        }
+
+        async function addCustomUnit() {
+            const grade = document.getElementById('custom-grade').value.trim();
+            const name = document.getElementById('custom-name').value.trim();
+            if(grade && name) {
+                await db.customUnits.put({grade, name});
+                renderUnits(document.getElementById('main-container'));
+            }
+        }
+
+        function filterUnits() {
+            const q = document.getElementById('unit-search').value.toLowerCase();
+            document.querySelectorAll('.unit-item').forEach(el => {
+                const name = el.querySelector('.unit-name').innerText.toLowerCase();
+                el.style.display = name.includes(q) ? 'flex' : 'none';
+            });
+            document.querySelectorAll('.unit-list').forEach(el => el.classList.add('open'));
+        }
+
+        async function setFavUnit(name) {
+            await setSetting('favUnit', name);
+            showDialog('完了', `${name}をお気に入りに設定しました。`);
+        }
+
+        function selectUnitAction(unit) {
+            showDialog('アクション選択', `${unit}を学習しますか？`, `
+                <button class="mdc-button" onclick="startQuiz('${unit}')">問題 (演習)</button>
+                <button class="mdc-button" onclick="startClass('${unit}')">授業 (解説)</button>
+            `);
+        }
+
+        // --- 3. 問題タブ ---
+        async function renderQuizHistory(container) {
+            const history = await db.questions.orderBy('date').reverse().toArray();
+            let html = `
+                <div class="p-4">
+                    <button class="mdc-button mdc-button--raised w-full mb-4" onclick="document.querySelector('.nav-item[data-tab=units]').click()">単元を選んで新しい問題を生成</button>
+                    <h3>保存された問題履歴</h3>
+                    <ul class="mdc-list">
+            `;
+            if(history.length === 0) html += `<li class="mdc-list-item">履歴はありません。</li>`;
+            history.forEach(h => {
+                html += `
+                    <li class="card flex justify-between items-center">
+                        <div>
+                            <div style="font-weight:bold;">${h.unit} (${h.mode})</div>
+                            <div style="font-size:12px; color:#555;">${new Date(h.date).toLocaleString()} - スコア: ${h.score || '-'}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="mdc-button" onclick="playSavedQuiz(${h.id})">解き直す</button>
+                            <button class="mdc-icon-button material-icons" onclick="deleteQuiz(${h.id})">delete</button>
+                        </div>
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+            container.innerHTML = html;
+            initMDC(container);
+        }
+
+        async function deleteQuiz(id) { await db.questions.delete(id); renderQuizHistory(document.getElementById('main-container')); }
+
+        async function startQuiz(unit) {
+            dialogInstance.close();
+            currentTab = 'quiz';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector('.nav-item[data-tab="quiz"]').classList.add('active');
+            
+            const container = document.getElementById('main-container');
+            container.innerHTML = `
+                <div class="p-4">
+                    <h2>${unit} の問題設定</h2>
+                    <div class="card">
+                        <h4>モード選択</h4>
+                        <div class="flex flex-col gap-2">
+                            <label><input type="radio" name="qMode" value="簡単" checked> 簡単モード</label>
+                            <label><input type="radio" name="qMode" value="テスト"> テストモード</label>
+                            <label><input type="radio" name="qMode" value="復習"> 復習モード</label>
+                            <label><input type="radio" name="qMode" value="長文"> 長文モード</label>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h4>採点方式</h4>
+                        <div class="flex flex-col gap-2">
+                            <label><input type="radio" name="qEval" value="normal" checked> 通常（解答・解説）</label>
+                            <label><input type="radio" name="qEval" value="ai"> Gemiペン先生採点(AI)</label>
+                        </div>
+                    </div>
+                    <button class="mdc-button mdc-button--raised w-full mt-4" onclick="generateAndPlayQuiz('${unit}')">問題生成スタート</button>
+                </div>
+            `;
+        }
+
+        async function generateAndPlayQuiz(unit) {
+            const mode = document.querySelector('input[name="qMode"]:checked').value;
+            const evalType = document.querySelector('input[name="qEval"]:checked').value;
+            showLoading(true);
+            try {
+                const prompt = `単元「${unit}」の英語問題を3問作成してください。難易度は「${mode}」です。
+必ず以下のJSONフォーマットのみを返してください。マークダウンやバッククォートは不要です。
+{ "questions": [ { "q": "問題文", "options": ["選択肢1","選択肢2","選択肢3","選択肢4"], "ans": "正解の選択肢の完全なテキスト", "exp": "解説文" } ] }`;
+                const res = await callGemini(prompt, "", true);
+                const data = JSON.parse(res.replace(/```json|```/g, '').trim());
+                const id = await db.questions.put({ unit, mode, data, evalType, date: new Date().toISOString(), score: null });
+                playSavedQuiz(id);
+            } catch(e) {
+                showDialog('エラー', '問題の生成に失敗しました: ' + e.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        let currentQuizState = null;
+
+        async function playSavedQuiz(id) {
+            const qData = await db.questions.get(id);
+            if(!qData) return;
+            currentQuizState = { ...qData, id, currentIdx: 0, userAnswers: [] };
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            const state = currentQuizState;
+            const q = state.data.questions[state.currentIdx];
+            const container = document.getElementById('main-container');
+            
+            let optsHtml = '';
+            q.options.forEach((opt, i) => {
+                optsHtml += `<label class="card" style="display:block; cursor:pointer;"><input type="radio" name="qOpt" value="${opt}"> ${opt}</label>`;
+            });
+
+            container.innerHTML = `
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3>${state.unit} - 第${state.currentIdx + 1}問 / ${state.data.questions.length}</h3>
+                        <button class="mdc-button mdc-button--outlined" onclick="renderQuizHistory(document.getElementById('main-container'))">中断</button>
+                    </div>
+                    <div class="card" style="font-size:18px;">${q.q}</div>
+                    <div class="flex flex-col gap-2 mt-4">${optsHtml}</div>
+                    <button class="mdc-button mdc-button--raised w-full mt-4" onclick="submitQuizAnswer()">次へ</button>
+                </div>
+            `;
+        }
+
+        async function submitQuizAnswer() {
+            const selected = document.querySelector('input[name="qOpt"]:checked');
+            if(!selected) { alert("選択してください"); return; }
+            
+            currentQuizState.userAnswers.push(selected.value);
+            currentQuizState.currentIdx++;
+
+            if(currentQuizState.currentIdx >= currentQuizState.data.questions.length) {
+                finishQuiz();
+            } else {
+                renderQuizQuestion();
+            }
+        }
+
+        async function finishQuiz() {
+            showLoading(true);
+            const state = currentQuizState;
+            let correctCount = 0;
+            let resultHtml = `<h3>結果発表</h3>`;
+            
+            if(state.evalType === 'ai') {
+                // AI採点
+                const prompt = `以下のユーザーの解答を評価し、点数（100点満点）と総評、各問題の解説を行ってください。
+問題データ: ${JSON.stringify(state.data.questions)}
+ユーザー解答: ${JSON.stringify(state.userAnswers)}
+ポーランドボールの「Gemiペン先生」として、励ましながら解説してください。HTMLタグで装飾して出力してください。`;
+                try {
+                    const aiRes = await callGemini(prompt);
+                    resultHtml += `<div class="md-content">${marked.parse(aiRes)}</div>`;
+                    correctCount = "?"; // AI独自評価のため
+                } catch(e) { resultHtml += `AI採点失敗: ${e.message}`; }
+            } else {
+                // 通常採点
+                state.data.questions.forEach((q, i) => {
+                    const isCorrect = q.ans === state.userAnswers[i];
+                    if(isCorrect) correctCount++;
+                    resultHtml += `
+                        <div class="card mt-2" style="border-left: 4px solid ${isCorrect ? '#4CAF50' : '#F44336'};">
+                            <div><strong>Q:</strong> ${q.q}</div>
+                            <div style="color:${isCorrect ? '#4CAF50' : '#F44336'}">あなたの解答: ${state.userAnswers[i]} ${isCorrect ? '(正解)' : '(不正解)'}</div>
+                            ${!isCorrect ? `<div>正解: ${q.ans}</div>` : ''}
+                            <div class="mt-2 text-sm text-gray-600"><strong>解説:</strong> ${q.exp}</div>
+                        </div>
+                    `;
+                });
+                state.score = `${correctCount}/${state.data.questions.length}`;
+            }
+
+            // スコア保存
+            if(state.score) {
+                await db.questions.update(state.id, { score: state.score });
+            }
+
+            document.getElementById('main-container').innerHTML = `
+                <div class="p-4">
+                    ${resultHtml}
+                    <div class="text-center mt-4 text-2xl font-bold">正解数: ${correctCount} / ${state.data.questions.length}</div>
+                    <button class="mdc-button mdc-button--raised w-full mt-4" onclick="renderQuizHistory(document.getElementById('main-container'))">履歴に戻る</button>
+                </div>
+            `;
+            showLoading(false);
+        }
+
+        // --- 4. 授業タブ ---
+        async function renderClassHistory(container) {
+            const history = await db.classes.orderBy('date').reverse().toArray();
+            let html = `
+                <div class="p-4">
+                    <button class="mdc-button mdc-button--raised w-full mb-4" onclick="document.querySelector('.nav-item[data-tab=units]').click()">単元を選んで授業開始</button>
+                    <h3>保存された授業アーカイブ</h3>
+                    <ul class="mdc-list">
+            `;
+            if(history.length === 0) html += `<li class="mdc-list-item">アーカイブはありません。</li>`;
+            history.forEach(h => {
+                html += `
+                    <li class="card flex justify-between items-center">
+                        <div>
+                            <div style="font-weight:bold;">${h.unit}</div>
+                            <div style="font-size:12px; color:#555;">${new Date(h.date).toLocaleString()}</div>
+                        </div>
+                        <button class="mdc-button" onclick="resumeClass(${h.id})">再受講</button>
+                    </li>
+                `;
+            });
+            html += `</ul></div>`;
+            container.innerHTML = html;
+        }
+
+        let currentClassState = null;
+
+        async function startClass(unit) {
+            dialogInstance.close();
+            currentTab = 'class';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelector('.nav-item[data-tab="class"]').classList.add('active');
+
+            const newClassId = await db.classes.put({ unit, log: [], date: new Date().toISOString() });
+            resumeClass(newClassId, true);
+        }
+
+        async function resumeClass(id, isNew = false) {
+            currentClassState = await db.classes.get(id);
+            const nativeMode = await getSetting('nativeMode', false);
+            const classMode = await getSetting('classMode', 'individual'); // individual, lecture, school
+            
+            const container = document.getElementById('main-container');
+            container.innerHTML = `
+                <div class="flex flex-col h-full">
+                    <div class="p-4 flex-grow overflow-y-auto" id="class-chat-area" style="padding-bottom: 120px;">
+                        <!-- チャットログ -->
+                    </div>
+                    <div class="bottom-nav" style="bottom: 56px; z-index: 5; flex-direction: column; padding: 8px;">
+                        <div id="class-controls" class="flex gap-2 w-full justify-center mb-2"></div>
+                        <div class="flex gap-2 w-full">
+                            <input type="text" id="class-input" class="mdc-text-field__input" style="flex-grow:1; border:1px solid #ccc; border-radius:4px; padding:8px;" placeholder="質問を入力...">
+                            <button class="mdc-button mdc-button--raised" onclick="sendClassMessage()">送信</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            if(isNew) {
+                const sys = `あなたはポーランドボールの英語教師「Gemini Teacher」です。${nativeMode ? '英語で' : '日本語で（語尾に「おん」等をつけて）'}単元「${currentClassState.unit}」を教えます。一度に長く話しすぎず、少しずつ解説してください。`;
+                await nextClassTurn("授業を始めてください。", sys);
+            } else {
+                renderClassLog();
+                setupClassControls();
+            }
+        }
+
+        function renderClassLog() {
+            const area = document.getElementById('class-chat-area');
+            area.innerHTML = '';
+            currentClassState.log.forEach(msg => {
+                if(msg.role === 'pb') {
+                    area.innerHTML += `
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="country-ball pb-us" style="transform: scale(0.6);"><div class="eyes-container"><div class="pb-eye"></div><div class="pb-eye"></div></div></div>
+                            <div class="chat-bubble chat-pb md-content">${marked.parse(msg.text)}</div>
+                        </div>
+                    `;
+                } else {
+                    area.innerHTML += `<div class="flex items-center gap-2 mb-4 justify-end"><div class="chat-bubble chat-user">${msg.text}</div></div>`;
+                }
+            });
+            area.scrollTop = area.scrollHeight;
+        }
+
+        async function setupClassControls() {
+            const classMode = await getSetting('classMode', 'individual');
+            const controls = document.getElementById('class-controls');
+            if(classMode === 'individual') {
+                controls.innerHTML = `<button class="mdc-button mdc-button--outlined" onclick="nextClassTurn('わかりました。次へ進んでください。')">わかった！次へ</button>`;
+            } else if(classMode === 'lecture') {
+                const interval = await getSetting('lectureInterval', 10);
+                controls.innerHTML = `<span>講義モード進行中... (${interval}秒間隔)</span>`;
+                // 本来はsetIntervalで進行する処理
+            } else if(classMode === 'school') {
+                controls.innerHTML = `<span>先生の質問に答えてね！</span>`;
+            }
+        }
+
+        async function nextClassTurn(userText, sysPrompt = "") {
+            const area = document.getElementById('class-chat-area');
+            if(userText && userText !== "授業を始めてください。") {
+                currentClassState.log.push({role: 'user', text: userText});
+                renderClassLog();
+            }
+            
+            showLoading(true);
+            try {
+                // コンテキストを文字列化（直近5件）
+                const context = currentClassState.log.slice(-5).map(l => `${l.role}: ${l.text}`).join('\n');
+                const prompt = `${context}\nuser: ${userText}\npb: `;
+                const ans = await callGemini(prompt, sysPrompt);
+                
+                currentClassState.log.push({role: 'pb', text: ans});
+                await db.classes.update(currentClassState.id, {log: currentClassState.log});
+                renderClassLog();
+                playTTS(ans);
+                setupClassControls();
+            } catch(e) {
+                alert(e.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function sendClassMessage() {
+            const input = document.getElementById('class-input');
+            const text = input.value.trim();
+            if(text) {
+                input.value = '';
+                nextClassTurn(text);
+            }
+        }
+
+        // --- 5. 英単語タブ ---
+        async function renderVocab(container) {
+            const folders = await db.vocabFolders.toArray();
+            let html = `
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>単語帳</h2>
+                        <button class="mdc-button mdc-button--raised" onclick="addVocabFolder()">+ フォルダ</button>
+                    </div>
+                    <div class="flex flex-wrap gap-4">
+            `;
+            if(folders.length === 0) html += `<p>フォルダがありません。</p>`;
+            for(let f of folders) {
+                const count = await db.vocabs.where('folderId').equals(f.id).count();
+                html += `
+                    <div class="card w-full" style="cursor:pointer;" onclick="openVocabFolder(${f.id}, '${f.name}')">
+                        <div class="flex justify-between">
+                            <h3 style="margin:0;"><i class="material-icons" style="vertical-align:bottom;">folder</i> ${f.name}</h3>
+                            <span>${count} 語</span>
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+            container.innerHTML = html;
+        }
+
+        async function addVocabFolder() {
+            const name = prompt("フォルダ名を入力:");
+            if(name) { await db.vocabFolders.put({name}); renderVocab(document.getElementById('main-container')); }
+        }
+
+        async function openVocabFolder(folderId, folderName) {
+            const vocabs = await db.vocabs.where('folderId').equals(folderId).toArray();
+            let html = `
+                <div class="p-4">
+                    <button class="mdc-button mb-4" onclick="renderVocab(document.getElementById('main-container'))"><i class="material-icons">arrow_back</i> 戻る</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2>${folderName}</h2>
+                        <div>
+                            <button class="mdc-button mdc-button--outlined" onclick="generateVocab(${folderId})">AI生成</button>
+                            <button class="mdc-button mdc-button--raised" onclick="addVocab(${folderId})">+ 単語</button>
+                        </div>
+                    </div>
+                    ${vocabs.length > 0 ? `<button class="mdc-button mdc-button--raised w-full mb-4" onclick="startFlashcards(${folderId})">フラッシュカード開始</button>` : ''}
+                    <ul class="mdc-list">
+            `;
+            vocabs.forEach(v => {
+                html += `<li class="card flex justify-between items-center"><div><strong>${v.en}</strong><br><span style="color:#666;">${v.ja}</span></div><button class="mdc-icon-button material-icons" onclick="deleteVocab(${v.id}, ${folderId}, '${folderName}')">delete</button></li>`;
+            });
+            html += `</ul></div>`;
+            document.getElementById('main-container').innerHTML = html;
+        }
+
+        async function addVocab(folderId) {
+            const en = prompt("英単語:");
+            const ja = prompt("日本語訳:");
+            if(en && ja) {
+                await db.vocabs.put({folderId, en, ja});
+                openVocabFolder(folderId, (await db.vocabFolders.get(folderId)).name);
+            }
+        }
+        async function deleteVocab(id, folderId, fname) { await db.vocabs.delete(id); openVocabFolder(folderId, fname); }
+
+        async function generateVocab(folderId) {
+            const theme = prompt("生成する単語のテーマ（例：旅行、TOEIC基本など）");
+            if(!theme) return;
+            showLoading(true);
+            try {
+                const res = await callGemini(`「${theme}」に関連する英単語を5つ生成し、以下のJSON形式で返してください。 { "words": [ {"en":"apple", "ja":"りんご"} ] }`, "", true);
+                const data = JSON.parse(res.replace(/```json|```/g, '').trim());
+                for(let w of data.words) {
+                    await db.vocabs.put({folderId, en: w.en, ja: w.ja});
+                }
+                openVocabFolder(folderId, (await db.vocabFolders.get(folderId)).name);
+            } catch(e) { alert("生成失敗"); } finally { showLoading(false); }
+        }
+
+        let flashcardState = null;
+        async function startFlashcards(folderId) {
+            const vocabs = await db.vocabs.where('folderId').equals(folderId).toArray();
+            if(vocabs.length===0) return;
+            flashcardState = { vocabs, current: 0, showJa: false, folderId };
+            renderFlashcard();
+        }
+        function renderFlashcard() {
+            const s = flashcardState;
+            const v = s.vocabs[s.current];
+            const html = `
+                <div class="p-4 h-full flex flex-col items-center justify-center">
+                    <div class="card w-full text-center" style="height:200px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="toggleFlashcard()">
+                        <h1 style="font-size:36px;">${s.showJa ? v.ja : v.en}</h1>
+                    </div>
+                    <div class="flex gap-4 mt-4 w-full">
+                        <button class="mdc-button mdc-button--outlined w-full" onclick="nextFlashcard(false)">分からない</button>
+                        <button class="mdc-button mdc-button--raised w-full" onclick="nextFlashcard(true)">分かった</button>
+                    </div>
+                    <button class="mdc-button mt-8" onclick="openVocabFolder(flashcardState.folderId, 'フォルダ')">終了する</button>
+                </div>
+            `;
+            document.getElementById('main-container').innerHTML = html;
+        }
+        function toggleFlashcard() { flashcardState.showJa = !flashcardState.showJa; renderFlashcard(); }
+        function nextFlashcard(know) {
+            flashcardState.current++;
+            flashcardState.showJa = false;
+            if(flashcardState.current >= flashcardState.vocabs.length) {
+                alert("一通り完了しました！");
+                openVocabFolder(flashcardState.folderId, 'フォルダ');
+            } else { renderFlashcard(); }
+        }
+
+        // --- 6. ユーザータブ ---
+        async function renderUser(container) {
+            const name = await getUser('name', '名無し');
+            const grade = await getUser('grade', '');
+            const school = await getUser('school', '');
+            const isCombined = await getUser('isCombined', false);
+            const iconBase64 = await getUser('icon', '');
+
+            container.innerHTML = `
+                <div class="p-4">
+                    <div class="card flex flex-col items-center">
+                        <div style="width:100px; height:100px; border-radius:50%; background:#ccc; background-image:url(${iconBase64}); background-size:cover; margin-bottom:16px;"></div>
+                        <button class="mdc-button mdc-button--outlined" onclick="document.getElementById('icon-input').click()">アイコン変更</button>
+                        <input type="file" id="icon-input" hidden accept="image/*" onchange="handleIconUpload(event)">
+                        
+                        <div class="w-full mt-4">
+                            <label class="mdc-text-field mdc-text-field--filled w-full mb-2">
+                                <span class="mdc-text-field__ripple"></span><span class="mdc-floating-label">ユーザー名</span>
+                                <input class="mdc-text-field__input" type="text" id="u-name" value="${name}"><span class="mdc-line-ripple"></span>
+                            </label>
+                            <label class="mdc-text-field mdc-text-field--filled w-full mb-2">
+                                <span class="mdc-text-field__ripple"></span><span class="mdc-floating-label">学年</span>
+                                <input class="mdc-text-field__input" type="text" id="u-grade" value="${grade}"><span class="mdc-line-ripple"></span>
+                            </label>
+                            <label class="mdc-text-field mdc-text-field--filled w-full mb-2">
+                                <span class="mdc-text-field__ripple"></span><span class="mdc-floating-label">学校名</span>
+                                <input class="mdc-text-field__input" type="text" id="u-school" value="${school}"><span class="mdc-line-ripple"></span>
+                            </label>
+                            <label class="flex items-center gap-2 mb-4">
+                                <div class="mdc-switch"><div class="mdc-switch__track"></div><div class="mdc-switch__thumb-underlay"><div class="mdc-switch__thumb"></div><input type="checkbox" id="u-combined" class="mdc-switch__native-control" role="switch" ${isCombined?'checked':''}></div></div>
+                                <span>中高一貫校</span>
+                            </label>
+                            <button class="mdc-button mdc-button--raised w-full" onclick="saveUserProfile()">プロフィール保存</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>AIニガテ・得意分析</h3>
+                        <div id="analysis-result" class="md-content mb-4" style="font-size:14px; color:#555;">分析結果はここに表示されます。</div>
+                        <button class="mdc-button mdc-button--outlined w-full" onclick="analyzeStudy()">分析を実行</button>
+                    </div>
+                </div>
+            `;
+            initMDC(container);
+            loadAnalysisResult();
+        }
+
+        function handleIconUpload(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                await db.user.put({key: 'icon', value: ev.target.result});
+                renderUser(document.getElementById('main-container'));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function saveUserProfile() {
+            await db.user.put({key: 'name', value: document.getElementById('u-name').value});
+            await db.user.put({key: 'grade', value: document.getElementById('u-grade').value});
+            await db.user.put({key: 'school', value: document.getElementById('u-school').value});
+            await db.user.put({key: 'isCombined', value: document.getElementById('u-combined').checked});
+            showDialog('保存完了', 'プロフィールを保存しました。');
+        }
+
+        async function analyzeStudy() {
+            showLoading(true);
+            const qList = await db.questions.toArray();
+            const prompt = `以下の学習履歴から、得意な単元と苦手な単元、今後の学習アドバイスを分析してください。ユーザーを励ますトーンでHTMLタグで装飾して出力してください。履歴: ${JSON.stringify(qList.map(q=>({u:q.unit, s:q.score})))}`;
+            try {
+                const res = await callGemini(prompt);
+                await db.user.put({key: 'analysis', value: res});
+                document.getElementById('analysis-result').innerHTML = marked.parse(res);
+            } catch(e) { alert("分析失敗"); } finally { showLoading(false); }
+        }
+        async function loadAnalysisResult() {
+            const res = await getUser('analysis');
+            if(res) document.getElementById('analysis-result').innerHTML = marked.parse(res);
+        }
+
+        // --- 7. 設定タブ ---
+        let versionTapCount = 0;
+        async function renderSettings(container) {
+            const apiKey = await getSetting('apiKey', '');
+            const model = await getSetting('model', 'gemini-2.5-flash');
+            const classMode = await getSetting('classMode', 'individual');
+            const autoTTS = await getSetting('autoTTS', true);
+            const nativeMode = await getSetting('nativeMode', false);
+
+            container.innerHTML = `
+                <div class="p-4">
+                    <h2>設定</h2>
+                    <div class="card">
+                        <h4>Gemini API 設定</h4>
+                        <label class="mdc-text-field mdc-text-field--filled w-full mb-2">
+                            <span class="mdc-text-field__ripple"></span><span class="mdc-floating-label">API Key</span>
+                            <input class="mdc-text-field__input" type="password" id="set-api" value="${apiKey}"><span class="mdc-line-ripple"></span>
+                        </label>
+                        <button class="mdc-button mdc-button--raised w-full mb-4" onclick="setSetting('apiKey', document.getElementById('set-api').value); alert('保存しました')">APIキー保存</button>
+                        
+                        <label class="mdc-text-field mdc-text-field--filled w-full mb-2">
+                            <span class="mdc-text-field__ripple"></span><span class="mdc-floating-label">Model Name</span>
+                            <input class="mdc-text-field__input" type="text" id="set-model" value="${model}"><span class="mdc-line-ripple"></span>
+                        </label>
+                        <button class="mdc-button mdc-button--raised w-full" onclick="setSetting('model', document.getElementById('set-model').value); alert('保存しました')">モデル保存</button>
+                    </div>
+
+                    <div class="card">
+                        <h4>授業設定</h4>
+                        <div class="flex flex-col gap-2 mb-4">
+                            <label><input type="radio" name="set-cmode" value="individual" ${classMode==='individual'?'checked':''}> 個別指導モード (わかったボタンで進行)</label>
+                            <label><input type="radio" name="set-cmode" value="lecture" ${classMode==='lecture'?'checked':''}> 講義モード (自動進行)</label>
+                            <label><input type="radio" name="set-cmode" value="school" ${classMode==='school'?'checked':''}> 学校モード (問題回答形式)</label>
+                        </div>
+                        <button class="mdc-button mdc-button--outlined w-full mb-4" onclick="setSetting('classMode', document.querySelector('input[name=set-cmode]:checked').value); alert('保存しました')">授業モード保存</button>
+
+                        <label class="flex items-center gap-2 mb-2">
+                            <input type="checkbox" id="set-native" ${nativeMode?'checked':''} onchange="setSetting('nativeMode', this.checked)">
+                            <span>完全英会話モード（ネイティブ形式）</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="set-tts" ${autoTTS?'checked':''} onchange="setSetting('autoTTS', this.checked)">
+                            <span>オートTTS (先生の発言を読み上げ)</span>
+                        </label>
+                    </div>
+
+                    <div class="card">
+                        <h4>バックアップ</h4>
+                        <button class="mdc-button mdc-button--raised w-full mb-2" onclick="exportData()">ZIPエクスポート</button>
+                        <button class="mdc-button mdc-button--outlined w-full" onclick="document.getElementById('import-file').click()">ZIPインポート</button>
+                        <input type="file" id="import-file" hidden accept=".zip" onchange="importData(event)">
+                    </div>
+
+                    <div class="card text-center" style="user-select:none;" onclick="handleVersionTap()">
+                        <p style="color:#aaa; margin:0;">PB English v1.0.0</p>
+                    </div>
+                </div>
+            `;
+            initMDC(container);
+        }
+
+        function handleVersionTap() {
+            versionTapCount++;
+            if(versionTapCount >= 30) {
+                versionTapCount = 0;
+                showDialog('System', 'are you mouse?', `<button class="mdc-button" onclick="window.open('https://google.com', '_blank')">Yes</button>`);
+            }
+        }
+
+        async function exportData() {
+            showLoading(true);
+            try {
+                const zip = new JSZip();
+                const tables = ['settings', 'user', 'news', 'chatHistory', 'customUnits', 'questions', 'classes', 'vocabFolders', 'vocabs'];
+                const data = {};
+                for(let t of tables) { data[t] = await db[t].toArray(); }
+                zip.file("pb_backup.json", JSON.stringify(data));
+                const content = await zip.generateAsync({type:"blob"});
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(content);
+                a.download = "pb_english_backup.zip";
+                a.click();
+            } catch(e) { alert('エクスポート失敗'); } finally { showLoading(false); }
+        }
+
+        async function importData(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            showLoading(true);
+            try {
+                const zip = await JSZip.loadAsync(file);
+                const jsonStr = await zip.file("pb_backup.json").async("string");
+                const data = JSON.parse(jsonStr);
+                const tables = ['settings', 'user', 'news', 'chatHistory', 'customUnits', 'questions', 'classes', 'vocabFolders', 'vocabs'];
+                for(let t of tables) {
+                    await db[t].clear();
+                    if(data[t].length > 0) await db[t].bulkPut(data[t]);
+                }
+                alert('インポート完了。リロードします。');
+                location.reload();
+            } catch(e) { alert('インポート失敗: ' + e.message); } finally { showLoading(false); }
+        }
+
+        // --- 初期化 ---
+        window.onload = () => {
+            setupPWA();
+            renderTab(); // 初期はホームタブ
+        };
+    </script>
+</body>
+</html>
